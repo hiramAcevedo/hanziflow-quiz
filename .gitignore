@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Next.js build output
+.next/
+out/
+build/
+dist/
+
+# Production
+/build
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment
+.env
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+*.pem
+
+# Quiz DB (progreso SRS del usuario, generado en runtime)
+data/quiz_progress.db
+data/quiz_progress.db-journal
+data/quiz_progress.db-shm
+data/quiz_progress.db-wal
+
+# Coverage
+coverage/
+
+# Next.js cache
+.swc/
+
+# Vercel
+.vercel
+
+# FUSE filesystem orphans (not project files — safe to delete locally
+# with: rm data/.fuse_hidden* when no process has quiz_progress.db open)
+.fuse_hidden*

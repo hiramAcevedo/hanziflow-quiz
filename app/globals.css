@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0a0a0a;
+  --fg: #ededed;
+  --card-bg: #141414;
+  --card-border: #2a2a2a;
+  --known: #22c55e;
+  --partial: #f59e0b;
+  --unknown: #ef4444;
+  --accent: #3b82f6;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+.card-flip {
+  perspective: 1000px;
+}
+
+.card-flip-inner {
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.card-flip-inner.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-front,
+.card-back {
+  backface-visibility: hidden;
+}
+
+.card-back {
+  transform: rotateY(180deg);
+}
