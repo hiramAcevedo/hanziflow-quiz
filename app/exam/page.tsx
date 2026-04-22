@@ -65,28 +65,28 @@ export default function ExamPage() {
   }
 
   const handleResult = useCallback(
-    async (result: Result, responseMs: number) => {
-      if (!cards[current]) return;
+    (result: Result, responseMs: number) => {
+      const card = cards[current];
+      if (!card) return;
 
-      // Log to server (as exam mode)
-      await fetch("/api/progress", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          simplified: cards[current].simplified,
-          result,
-          mode: "exam",
-          response_ms: responseMs,
-        }),
-      });
-
+      // UI optimista (ver diagnostic/page.tsx).
       setResults((prev) => ({ ...prev, [result]: prev[result] + 1 }));
-
       if (current + 1 >= cards.length) {
         setDone(true);
       } else {
         setCurrent((c) => c + 1);
       }
+
+      fetch("/api/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          simplified: card.simplified,
+          result,
+          mode: "exam",
+          response_ms: responseMs,
+        }),
+      }).catch((err) => console.error("progress POST failed", err));
     },
     [cards, current]
   );
@@ -237,7 +237,7 @@ export default function ExamPage() {
 
   return (
     <main className="min-h-screen p-6 flex flex-col items-center justify-center">
-      <div className="w-full max-w-lg">
+      <div className="w-full max-w-2xl">
         <div className="flex items-center justify-between mb-6">
           <span className="text-sm text-neutral-500">Examen en curso</span>
           <div className="flex gap-3 text-sm">

@@ -136,6 +136,22 @@ npm run lint         # ESLint
 
 Variable de entorno opcional: `QUIZ_DB_PATH` para sobreescribir la ubicación de la DB de progreso (default: `data/quiz_progress.db`).
 
+## Modo Dictado (audio → escribe)
+
+Modo productivo para practicar audio→pinyin→hanzi en bloques de 25–40 palabras.
+
+```bash
+npm run dev -- --hostname 0.0.0.0   # accesible en LAN
+# Mac:    http://localhost:3001/dictado
+# iPad:   http://<ip-del-mac>:3001/dictado   (Apple Pencil en Safari iOS)
+```
+
+Scopes soportados en MVP: `hsk2.0_l1` (156), `hsk2.0_l2` (163), `hsk3.0_l1` (507). Audio, oraciones y traducciones ES vienen de [`../hanziflow-audio/`](../hanziflow-audio/). Si ese directorio no existe en el host, el endpoint `/api/dictado/scope/*` seguirá devolviendo entradas sin ejemplos y los MP3 responderán 404.
+
+Query params del bloque: `?size=30` (20–40 recomendado), `?voice=corta|larga|neutral` (default `larga`).
+
+Los intentos se persisten en la tabla `dictado_attempts` dentro de `data/quiz_progress.db` (el MVP guarda pero no re-selecciona adaptativamente).
+
 ## Estado actual (v0.1 — prototipo funcional)
 
 - [x] Lectura de tarjetas HSK desde DB verificada (4 bloques + all)

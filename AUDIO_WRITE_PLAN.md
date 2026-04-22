@@ -315,3 +315,47 @@ El MVP se considera terminado cuando Hiram puede:
 - Modo "solo pinyin" para días de puro listening review (saltar hanzi canvas).
 - Voz toggleable en runtime.
 - TTS de rumbo inverso (texto ES → audio ES) para auto-práctica de la oración.
+
+### Deuda técnica: cobertura de cache de audio
+
+Al 2026-04-21 el cache (`../hanziflow-audio/cache`) solo cubre los scopes
+`hsk2.0_l1`, `hsk2.0_l2` y `hsk3.0_l1`. Los scopes restantes quedan sin audio.
+
+- `[ ]` Generar cache para `hsk3.0_l2_new` (extensión UCD).
+- `[ ]` Generar cache para scopes externos (vocab custom, vaults).
+- `[ ]` Considerar TTS on-demand con fallback a cache estático.
+
+**Consumidores cableados que hoy degradan a "sin audio próximamente":**
+- `components/flashcard.tsx` — usa `scopeForCard(card)` para inferir el scope
+  desde `hsk2_level`/`hsk3_level`. Retorna `null` cuando la tarjeta no está
+  cubierta, y la UI muestra el placeholder en lugar del `<AudioPlayer>`.
+- `/diagnostic`, `/practice`, `/exam` — todos renderizan `Flashcard`, así que
+  heredan el degradado automáticamente.
+
+Cuando se genere el cache faltante, basta con extender `SUPPORTED_SCOPES` en
+`lib/audio-urls.ts` y el mapping en `lib/scope-for-card.ts`; los consumidores
+no necesitan cambios.
+
+### Deuda técnica: cobertura de traducciones ES
+
+Al 2026-04-21 las traducciones ES viven en `../hanziflow-audio/translations/`
+como JSON (`hsk2.0_l1.json`, `hsk2.0_l2.json`, `hsk3.0_l1.json`). La DB solo
+guarda `meanings_en` (JSON array). La cobertura ES coincide hoy con la del
+audio pero conceptualmente son independientes.
+
+- `[ ]` Generar `hsk3.0_l2.json` para HSK 3.0 L2 nuevos.
+- `[ ]` Auditar entradas con traducción pobre ("surname", "given name", etc.)
+      — probablemente requiera pasada manual o mejor prompt de LLM.
+- `[ ]` Multi-traducción: hoy el JSON guarda una sola string. Evaluar schema
+      `{ primary, alts? }` o simplemente permitir varias separadas por `;` y
+      renderizarlas como lista.
+- `[ ]` Switch UI ES↔EN (cuando la cobertura ES esté auditada — hoy es
+      prematuro porque ES todavía puede ser incompleta para algunos ítems).
+
+**Consumidor cableado que degrada a inglés:**
+- `components/flashcard.tsx` — si `translation_es` es `null`, renderiza
+  `meanings_en` parseado en gris itálico como fallback. El enriquecimiento
+  pasa por `lib/translations-es.ts` (cache en memoria del proceso).
+
+Cuando se amplíe la cobertura, añadir el archivo a `COVERED_FILES` en
+`lib/translations-es.ts` y el ítem dejará de caer al fallback.

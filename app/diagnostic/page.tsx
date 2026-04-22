@@ -49,28 +49,30 @@ export default function DiagnosticPage() {
   }, [block]);
 
   const handleResult = useCallback(
-    async (result: Result, responseMs: number) => {
-      if (!cards[current]) return;
+    (result: Result, responseMs: number) => {
+      const card = cards[current];
+      if (!card) return;
 
-      // Record to server
-      await fetch("/api/progress", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          simplified: cards[current].simplified,
-          result,
-          mode: "diagnostic",
-          response_ms: responseMs,
-        }),
-      });
-
+      // UI optimista: avanzamos estado de inmediato para que el siguiente
+      // keypress caiga en la siguiente tarjeta sin esperar la red. El fetch
+      // va en background y los errores se silencian en consola.
       setResults((prev) => ({ ...prev, [result]: prev[result] + 1 }));
-
       if (current + 1 >= cards.length) {
         setDone(true);
       } else {
         setCurrent((c) => c + 1);
       }
+
+      fetch("/api/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          simplified: card.simplified,
+          result,
+          mode: "diagnostic",
+          response_ms: responseMs,
+        }),
+      }).catch((err) => console.error("progress POST failed", err));
     },
     [cards, current]
   );
@@ -161,7 +163,7 @@ export default function DiagnosticPage() {
 
   return (
     <main className="min-h-screen p-6 flex flex-col items-center justify-center">
-      <div className="w-full max-w-lg">
+      <div className="w-full max-w-2xl">
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => setBlock(null)}

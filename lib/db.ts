@@ -1,6 +1,7 @@
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
+import { getTranslationsEs } from "./translations-es";
 
 // HSK vocabulary DB (read-only source)
 const HSK_DB_PATH = path.resolve(
@@ -78,6 +79,20 @@ function getQuizDb(): Database.Database {
     CREATE INDEX IF NOT EXISTS idx_progress_next_review ON card_progress(next_review);
     CREATE INDEX IF NOT EXISTS idx_progress_simplified ON card_progress(simplified);
     CREATE INDEX IF NOT EXISTS idx_review_log_created ON review_log(created_at);
+
+    -- Dictado (audio→escribe) attempts — MVP: almacena, no re-selecciona.
+    CREATE TABLE IF NOT EXISTS dictado_attempts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      scope TEXT NOT NULL,
+      simplified TEXT NOT NULL,
+      attempted_at INTEGER NOT NULL,
+      pinyin_ok INTEGER NOT NULL,
+      hanzi_ok INTEGER NOT NULL,
+      self_grade TEXT,
+      pinyin_input TEXT,
+      response_ms INTEGER
+    );
+    CREATE INDEX IF NOT EXISTS ix_dictado_scope_simp ON dictado_attempts(scope, simplified);
   `);
 
   return db;
@@ -90,6 +105,7 @@ export interface HskCard {
   pinyin_numeric: string | null;
   pos: string | null;
   meanings_en: string | null;
+  translation_es: string | null;
   frequency_rank: number | null;
   radical: string | null;
   hsk2_level: number | null;
@@ -164,12 +180,22 @@ export function getCards(block?: CardBlock): HskCard[] {
       `;
     }
 
-    let cards = hsk.prepare(query).all(params) as HskCard[];
+    // La query no selecciona translation_es porque la traducción ES vive en
+    // JSON externos (hanziflow-audio/translations/*.json), no en la DB.
+    // Enriquecemos aquí via getTranslationsEs().
+    type HskCardRow = Omit<HskCard, "translation_es">;
+    let rows = hsk.prepare(query).all(params) as HskCardRow[];
 
     // Filter out HSK 2.0 items from HSK 3.0 "new" blocks
     if (block === "hsk3_l1_new" || block === "hsk3_l2_new") {
-      cards = cards.filter((c) => !hsk2Items.has(c.simplified));
+      rows = rows.filter((c) => !hsk2Items.has(c.simplified));
     }
+
+    const esMap = getTranslationsEs();
+    const cards: HskCard[] = rows.map((r) => ({
+      ...r,
+      translation_es: esMap.get(r.simplified) ?? null,
+    }));
 
     return cards;
   } finally {
